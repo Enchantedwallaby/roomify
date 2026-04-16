@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "outline";
 type ButtonSize = "sm" | "md" | "lg";
 
 type ButtonProps = PropsWithChildren<
@@ -24,7 +24,7 @@ const Button = ({
     "btn",
     `btn--${variant}`,
     `btn--${size}`,
-    fullWidth ? "btn--fullwidth" : "",
+    fullWidth ? "btn--full" : "",
     className,
   ]
     .filter(Boolean)

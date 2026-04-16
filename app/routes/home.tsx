@@ -2,6 +2,9 @@ import type { Route } from "./+types/home";
 import Navbar from "../../Components/Navbar";
 import {ArrowDown, ArrowRight, ArrowUpRight, Clock, Layers} from "lucide-react";
 import Button from "../../Components/ui/Button";
+import Upload from "../../Components/upload";
+import {useNavigate} from "react-router";
+import {saveUploadedImage} from "../../lib/upload-storage";
 
 
 export function meta({}: Route.MetaArgs) {
@@ -12,10 +15,18 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
+    const navigate=useNavigate();
+    const handleUploadComplete=async (base64Image:string) => {
+        const newId=Date.now().toString();
+        saveUploadedImage(newId, base64Image);
+        navigate(`/visualizer/${newId}`);
+        return true;
+    }
+
   return(
       <div className="home">
         <Navbar/>
- <section className="hero">23
+ <section className="hero">
      <div className="announce">
          <div className="dot">
              <div className="pulse"></div>
@@ -37,7 +48,7 @@ export default function Home() {
          </Button>
      </div>
 
-     <div id="uplaod" className="upload-shell">
+     <div id="upload" className="upload-shell">
          <div className="grid-overlay"/>
          <div className="upload-card">
              <div className="upload-head">
@@ -47,7 +58,7 @@ export default function Home() {
                  <h3>upload your floor plans</h3>
                  <p>Supports JPG,PNG formats upto 10 MB</p>
              </div>
-             <p>upload images</p>
+             <Upload onComplete={handleUploadComplete}/>
          </div>
      </div>
  </section>
