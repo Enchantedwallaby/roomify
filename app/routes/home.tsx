@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import Navbar from "../../Components/Navbar";
-import {ArrowDown, ArrowRight, ArrowUpRight, Clock, Layers} from "lucide-react";
+import {ArrowRight, ArrowUpRight, Clock, Layers} from "lucide-react";
 import Button from "../../Components/ui/Button";
 import Upload from "../../Components/upload";
 import {useNavigate} from "react-router";
