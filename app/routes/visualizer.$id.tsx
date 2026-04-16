@@ -1,57 +1,20 @@
-import {useEffect, useState} from "react";
-import {useParams} from "react-router";
-import {loadUploadedImage} from "../../lib/upload-storage";
+import {useLocation} from "react-router";
 
 const VisualizerId=()=>{
-    const {id} = useParams();
-    const [imageData, setImageData] = useState<string | null>(null);
-    const [hasError, setHasError] = useState(false);
-
-    useEffect(() => {
-        if (!id) {
-            setHasError(true);
-            setImageData(null);
-            return;
-        }
-
-        const storedImage = loadUploadedImage(id);
-
-        if (!storedImage) {
-            setHasError(true);
-            setImageData(null);
-            return;
-        }
-
-        setHasError(false);
-        setImageData(storedImage);
-    }, [id]);
-
-    return(
-        <div className="visualizer-route">
+    const location = useLocation();
+    const {initialImage, name } = location.state || {};
+    return (
+        <section>
+            <h1>{name || 'untitled project'}</h1>
             <div className="visualizer">
-                <div className="panel">
-                    <div className="panel-header">
-                        <div className="panel-meta">
-                            <p>Visualizer</p>
-                            <h2>{id ? `Upload ${id}` : "Missing Upload"}</h2>
-                            <p className="note">
-                                {hasError ? "The requested upload could not be loaded." : "Loaded from the latest uploaded floor plan."}
-                            </p>
-                        </div>
+                {initialImage && (
+                    <div className="image-container">
+                        <h2>Source Image</h2>
+                        <img src={initialImage} alt="source"/>
                     </div>
-                    <div className="render-area">
-                        {imageData ? (
-                            <img src={imageData} alt="Uploaded floor plan" className="render-img"/>
-                        ) : (
-                            <div className="render-placeholder">
-                                <p className="status-text">{hasError ? "Upload not found or corrupted." : "Loading..."}</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                )}
             </div>
-        </div>
+        </section>
     )
 }
-
-export default VisualizerId;
+export default VisualizerId
