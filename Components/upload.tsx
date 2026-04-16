@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react'
 import {useOutletContext} from "react-router";
 import {CheckCircle2, ImageIcon, UploadIcon} from "lucide-react";
 import {
+    MAX_FILE_SIZE_BYTES,
     PROGRESS_INCREMENT,
     PROGRESS_INTERVAL_MS,
     REDIRECT_DELAY_MS,
@@ -10,6 +11,8 @@ import {
 type UploadProps = {
     onComplete?: (base64Data: string) => void;
 }
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const Upload=({onComplete}: UploadProps)=>{
     const[file, setFile]=useState<File | null>(null);
@@ -45,6 +48,13 @@ const Upload=({onComplete}: UploadProps)=>{
 
     const processFile = (selectedFile: File | null) => {
         if (!isSignedIn || !selectedFile) return;
+        if (!ALLOWED_IMAGE_TYPES.includes(selectedFile.type) || selectedFile.size > MAX_FILE_SIZE_BYTES) {
+            clearUploadTimers();
+            setIsDragging(false);
+            setFile(null);
+            setProgress(0);
+            return;
+        }
 
         clearUploadTimers();
         setIsDragging(false);
@@ -52,6 +62,14 @@ const Upload=({onComplete}: UploadProps)=>{
         setProgress(0);
 
         const reader = new FileReader();
+
+        const handleReaderFailure = () => {
+            clearUploadTimers();
+            progressIntervalRef.current = null;
+            redirectTimeoutRef.current = null;
+            setProgress(0);
+            setFile(null);
+        };
 
         reader.onload = () => {
             const base64Data = typeof reader.result === "string" ? reader.result : "";
@@ -73,6 +91,9 @@ const Upload=({onComplete}: UploadProps)=>{
                 });
             }, PROGRESS_INTERVAL_MS);
         };
+
+        reader.onerror = handleReaderFailure;
+        reader.onabort = handleReaderFailure;
 
         reader.readAsDataURL(selectedFile);
     };
@@ -130,7 +151,7 @@ const Upload=({onComplete}: UploadProps)=>{
                     <input
                         type="file"
                         className="drop-input"
-                        accept=".jpg,.jpeg,.png"
+                        accept="image/jpeg,image/jpg,image/png,.jpg,.jpeg,.png"
                         disabled={!isSignedIn}
                         onChange={handleFileChange}
                     />
