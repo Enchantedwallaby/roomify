@@ -33,8 +33,8 @@ export default function Home() {
         }
 
         setProjects((prev: DesignItem[] | undefined): DesignItem[] => [
-            newItem,
-            ...(prev || [])
+            saved,
+            ...(prev ?? [])
         ]);
         navigate(`/visualizer/${newId}`,{
             state:{
