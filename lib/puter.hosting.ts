@@ -52,7 +52,7 @@ export const uploadImageToHosting = async({hosting, url, projectId, label }:Stor
         const hostedUrl= getHostedUrl({subdomain: hosting.subdomain}, filePath);
         return hostedUrl ? {url: hostedUrl} : null;
     }catch (e) {
-        console.warn(`Could not upload image to hosting:${url}`);
+        console.warn("Could not upload image to hosting", { projectId, label, error: e });
         return null;
         
     }
