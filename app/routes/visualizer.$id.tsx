@@ -61,7 +61,7 @@ const VisualizerId=()=>{
                         <div className="panel-header">
                             <div className="panel-meta">
                                 <p>Project</p>
-                                <h2>{'untitled project'}</h2>
+                                <h2>{name?.trim() || "untitled project"}</h2>
                                 <p className="note">Created by you</p>
                             </div>
                             <div className="panel-actions">
