@@ -24,6 +24,22 @@ Install the dependencies:
 npm install
 ```
 
+### Local Environment
+
+Create your own local env file before running the app:
+
+```bash
+cp .env.example .env.local
+```
+
+Then update `.env.local` with your own values:
+
+```env
+VITE_PUTER_WORKER_URL=REPLACE_ME
+```
+
+Do not commit `.env.local`. Only `.env.local.example` should be checked in.
+
 ### Development
 
 Start the development server with HMR:
