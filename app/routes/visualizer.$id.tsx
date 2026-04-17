@@ -49,7 +49,7 @@ const VisualizerId=()=>{
                     <div className="brand">
                         <Box className="logo"/>
                         <span className="name">
-                        Roomify
+                        Plan2Reality
                     </span>
                     </div>
                     <Button variant="ghost" size="sm" onClick={handleBack} className="exit">

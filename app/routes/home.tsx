@@ -11,8 +11,8 @@ import {createProject} from "../../lib/puter.action";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Plan2Reality" },
+    { name: "description", content: "Transform floor plans into realistic 3D renders with Plan2Reality." },
   ];
 }
 
@@ -54,11 +54,11 @@ export default function Home() {
          <div className="dot">
              <div className="pulse"></div>
          </div>
-         <p>Introducing Roomify</p>
+          <p>Introducing Plan2Reality</p>
      </div>
-     <h1> Build beautiful spaces at the speed of your thoughts with ROOMIFY</h1>
+      <h1> Build beautiful spaces at the speed of your thoughts with PLAN2REALITY</h1>
      <p className="subtitle">
-         Roomify is an AI design environment that helps you visualize,
+          Plan2Reality is an AI design environment that helps you visualize,
          render, and ship architectural projects faster than ever.
      </p>
      <div className="actions">
