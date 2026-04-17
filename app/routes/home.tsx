@@ -1,126 +1,167 @@
+import {useEffect, useRef, useState} from "react";
+import { useNavigate } from "react-router";
+import { ArrowRight, ArrowUpRight, Clock, Layers } from "lucide-react";
+
 import type { Route } from "./+types/home";
 import Navbar from "../../Components/Navbar";
-import {ArrowRight, ArrowUpRight, Clock, Layers} from "lucide-react";
 import Button from "../../Components/ui/Button";
 import Upload from "../../Components/upload";
-import {useNavigate} from "react-router";
-import {saveUploadedImage} from "../../lib/upload-storage";
-import {useState} from "react";
-import {createProject} from "../../lib/puter.action";
-
+import { saveUploadedImage } from "../../lib/upload-storage";
+import {createProject, getProjects} from "../../lib/puter.action";
 
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "Plan2Reality" },
-    { name: "description", content: "Transform floor plans into realistic 3D renders with Plan2Reality." },
+    {
+      name: "description",
+      content:
+        "Transform floor plans into realistic 3D renders with Plan2Reality.",
+    },
   ];
 }
 
 export default function Home() {
-    const navigate=useNavigate();
-    const [projects,setProjects]=useState<DesignItem[]>([]);
-    const handleUploadComplete=async (base64Image:string) => {
-        const newId=Date.now().toString();
-        saveUploadedImage(newId, base64Image);
-        const name= `Residence${newId}`;
-        const newItem={
-            id:newId, name, sourceImage:base64Image, renderedImage:undefined, timestamp:Date.now()
-        }
-        const saved= await createProject({item:newItem, visibility:'private'});
-        if(!saved){
-            console.error("Failed to create project");
-            return false;
-        }
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<DesignItem[]>([]);
+  const isCreatingProjectRef = useRef(false);
 
-        setProjects((prev: DesignItem[] | undefined): DesignItem[] => [
-            saved,
-            ...(prev ?? [])
-        ]);
-        navigate(`/visualizer/${newId}`,{
-            state:{
-                initialImage: saved.sourceImage,
-                initialRender: saved.renderedImage || null,
-                name,
-            }
-        });
-        return true;
+  const handleUploadComplete = async (base64Image: string) => {
+    if (isCreatingProjectRef.current) return false;
+
+    try {
+      isCreatingProjectRef.current = true;
+
+      const newId = Date.now().toString();
+      const name = `Residence ${newId}`;
+
+      saveUploadedImage(newId, base64Image);
+
+      const newItem: DesignItem = {
+        id: newId,
+        name,
+        sourceImage: base64Image,
+        renderedImage: undefined,
+        timestamp: Date.now(),
+      };
+
+      const saved = await createProject({ item: newItem, visibility: "private" });
+
+      if (!saved) {
+        console.error("Failed to create project");
+        return false;
+      }
+
+      setProjects((prev) => [saved, ...prev]);
+
+      navigate(`/visualizer/${newId}`, {
+        state: {
+          initialImage: saved.sourceImage,
+          initialRender: saved.renderedImage || null,
+          name,
+        } satisfies VisualizerLocationState,
+      });
+
+      return true;
+    } finally {
+      isCreatingProjectRef.current = false;
     }
+  };
+  useEffect(() => {
+    const fetchProjects = async ()=>{
+      const items = await getProjects();
+      setProjects(items)
+    }
+    fetchProjects()
+  }, []);
 
-    return(
-      <div className="home">
-        <Navbar/>
- <section className="hero">
-     <div className="announce">
-         <div className="dot">
-             <div className="pulse"></div>
-         </div>
+
+  return (
+    <div className="home">
+      <Navbar />
+
+      <section className="hero">
+        <div className="announce">
+          <div className="dot">
+            <div className="pulse" />
+          </div>
           <p>Introducing Plan2Reality</p>
-     </div>
-      <h1> Build beautiful spaces at the speed of your thoughts with PLAN2REALITY</h1>
-     <p className="subtitle">
+        </div>
+
+        <h1>Build beautiful spaces at the speed of your thoughts with PLAN2REALITY</h1>
+
+        <p className="subtitle">
           Plan2Reality is an AI design environment that helps you visualize,
-         render, and ship architectural projects faster than ever.
-     </p>
-     <div className="actions">
-         <a href="#upload" className="cta">
-             Start Building <ArrowRight className="icon" />
-         </a>
+          render, and ship architectural projects faster than ever.
+        </p>
 
-         <Button variant="outline" size="lg" className="demo">
-             watch demo
-         </Button>
-     </div>
+        <div className="actions">
+          <a href="#upload" className="cta">
+            Start Building <ArrowRight className="icon" />
+          </a>
 
-     <div id="upload" className="upload-shell">
-         <div className="grid-overlay"/>
-         <div className="upload-card">
-             <div className="upload-head">
-                 <div className="upload-icon">
-                     <Layers className="icon"/>
-                 </div>
-                 <h3>upload your floor plans</h3>
-                 <p>Supports JPG,PNG formats upto 10 MB</p>
-             </div>
-             <Upload onComplete={handleUploadComplete}/>
-         </div>
-     </div>
- </section>
-          <section className="projects">
-              <div className="section-inner">
-                  <div className="section-head">
-                      <div className="copy">
-                          <h2>Projects</h2>
-                          <p>You're latest work and shared community projects all in one place</p>
+          <Button variant="outline" size="lg" className="demo">
+            watch demo
+          </Button>
+        </div>
+
+        <div id="upload" className="upload-shell">
+          <div className="grid-overlay" />
+          <div className="upload-card">
+            <div className="upload-head">
+              <div className="upload-icon">
+                <Layers className="icon" />
+              </div>
+              <h3>upload your floor plans</h3>
+              <p>Supports JPG, PNG formats up to 10 MB</p>
+            </div>
+
+            <Upload onComplete={handleUploadComplete} />
+          </div>
+        </div>
+      </section>
+
+      <section className="projects">
+        <div className="section-inner">
+          <div className="section-head">
+            <div className="copy">
+              <h2>Projects</h2>
+              <p>Your latest work and shared community projects all in one place</p>
+            </div>
+          </div>
+
+          <div className="projects-grid">
+            {projects.length === 0 ? (
+              <div className="empty">Upload a floor plan to create your first project.</div>
+            ) : (
+              projects.map(({ id, name, renderedImage, sourceImage, timestamp }) => (
+                <div key={id} className="project-card group" onClick={() => navigate(`/visualizer/${id}`)}>
+                  <div className="preview">
+                    <img src={renderedImage || sourceImage} alt={name || "Project"} />
+                    <div className="badge">
+                      <span>Community</span>
+                    </div>
+                  </div>
+
+                  <div className="card-body">
+                    <div>
+                      <h3>{name || "Untitled project"}</h3>
+
+                      <div className="meta">
+                        <Clock size={12} />
+                        <span>{new Date(timestamp).toLocaleDateString()}</span>
                       </div>
-                  </div>
-                  <div className="projects-grid">
-                      {projects.map(({id, name, renderedImage, sourceImage, timestamp })=>(
-                          <div key={id} className="project-card group">
-                          <div className="preview">
-                          <img src={renderedImage || sourceImage} alt="Project"/>
-                          <div className="badge">
-                          <span>Community</span>
-                          </div>
-                          </div>
-                          <div className="card-body">
-                          <div>
-                          <h3> {name}</h3>
+                    </div>
 
-                          <div className="meta">
-                          <Clock size={12}/>
-                  <span>{new Date(timestamp).toLocaleDateString()}</span>
-              </div>
-      </div>
-    <div className="arrow">
-        <ArrowUpRight size={18}/>
+                    <div className="arrow">
+                      <ArrowUpRight size={18} />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
     </div>
-</div>
-</div>
-                      ))}
-
-                  </div>
-              </div>
-          </section>
-      </div>
-  )
+  );
 }
