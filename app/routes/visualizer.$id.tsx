@@ -36,6 +36,7 @@ const VisualizerId=()=>{
 
         if(initialRender){
             setCurrentImage(initialRender);
+            return;
         }
 
         runGeneration();
