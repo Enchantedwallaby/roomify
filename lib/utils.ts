@@ -1,4 +1,4 @@
-export const HOSTING_CONFIG_KEY = "roomify_hosting_config";
+export const HOSTING_CONFIG_KEY = "plan2reality_hosting_config";
 export const HOSTING_DOMAIN_SUFFIX = ".puter.site";
 
 export const isHostedUrl = (value: unknown): value is string =>
@@ -13,7 +13,7 @@ export const isHostedUrl = (value: unknown): value is string =>
     })();
 
 export const createHostingSlug = () =>
-    `roomify-${Date.now().toString(36)}-${Math.random()
+    `plan2reality-${Date.now().toString(36)}-${Math.random()
         .toString(36)
         .slice(2, 8)}`;
 

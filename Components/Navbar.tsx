@@ -28,7 +28,7 @@ const Navbar=()=>{
                 <div className="brand">
                     <Box className="logo"/>
                     <span className="name">
-                        Roomify
+                        Plan2Reality
                     </span>
                 </div>
                     <ul className="links">
