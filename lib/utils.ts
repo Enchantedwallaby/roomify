@@ -2,15 +2,7 @@ export const HOSTING_CONFIG_KEY = "plan2reality_hosting_config";
 export const HOSTING_DOMAIN_SUFFIX = ".puter.site";
 
 export const isHostedUrl = (value: unknown): value is string =>
-    typeof value === "string" &&
-    (() => {
-        try {
-            const { hostname } = new URL(value);
-            return hostname === HOSTING_DOMAIN_SUFFIX.slice(1) || hostname.endsWith(HOSTING_DOMAIN_SUFFIX);
-        } catch {
-            return false;
-        }
-    })();
+    typeof value === "string" && value.includes(HOSTING_DOMAIN_SUFFIX);
 
 export const createHostingSlug = () =>
     `plan2reality-${Date.now().toString(36)}-${Math.random()
