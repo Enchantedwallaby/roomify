@@ -9,6 +9,9 @@ export const fetchAsDataUrl = async (url: string): Promise<string> => {
     }
 
     const blob = await response.blob();
+    if (!blob.type.startsWith("image/")) {
+        throw new Error(`Expected an image response, got ${blob.type || "unknown content type"}`);
+    }
 
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
