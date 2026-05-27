@@ -3,16 +3,21 @@ import {useEffect, useRef, useState} from "react";
 import {generate3DView} from "../../lib/ai.action";
 import {Box, Download, RefreshCcw, Share2, X} from "lucide-react";
 import Button from "../../Components/ui/Button";
-import {createProject, getProjectById} from "../../lib/puter.action";
+import {
+    createProject,
+    getProjectById,
+    publishRenderedProject,
+} from "../../lib/puter.action";
 import {ReactCompareSlider, ReactCompareSliderImage} from "react-compare-slider";
 
 const VisualizerId = () => {
     const { id } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
-    const { userId } = useOutletContext<AuthContext>()
+    const { userId, userName } = useOutletContext<AuthContext>()
 
     const hasInitialGenerated = useRef(false);
+    const publishedToFeedRef = useRef<string | null>(null);
 
     const [project, setProject] = useState<DesignItem | null>(null);
     const [isProjectLoading, setIsProjectLoading] = useState(true);
@@ -48,21 +53,28 @@ const VisualizerId = () => {
             if(result.renderedImage) {
                 setCurrentImage(result.renderedImage);
 
-                const updatedItem = {
+                const updatedItem: DesignItem = {
                     ...item,
+                    id: id,
                     renderedImage: result.renderedImage,
                     renderedPath: result.renderedPath,
                     timestamp: Date.now(),
                     ownerId: item.ownerId ?? userId ?? null,
-                    isPublic: item.isPublic ?? false,
-                }
+                    sharedBy: item.sharedBy ?? userName ?? null,
+                    isPublic: true,
+                    sharedAt: new Date().toISOString(),
+                };
 
-                const saved = await createProject({ item: updatedItem, visibility: "private" })
+                const published = await publishRenderedProject(updatedItem);
+                const saved = await createProject({
+                    item: published,
+                    visibility: "public",
+                });
 
-                if(saved) {
-                    setProject(saved);
-                    setCurrentImage(saved.renderedImage || result.renderedImage);
-                }
+                setProject(saved ?? published);
+                setCurrentImage(
+                    saved?.renderedImage || published.renderedImage || result.renderedImage,
+                );
             }
         } catch (error) {
             console.error('Generation failed: ', error)
@@ -112,6 +124,14 @@ const VisualizerId = () => {
             setCurrentImage(resolvedProject?.renderedImage || null);
             setIsProjectLoading(false);
             hasInitialGenerated.current = false;
+
+            if (
+                resolvedProject?.renderedImage &&
+                publishedToFeedRef.current !== resolvedProject.id
+            ) {
+                publishedToFeedRef.current = resolvedProject.id;
+                void publishRenderedProject(resolvedProject);
+            }
         };
 
         loadProject();

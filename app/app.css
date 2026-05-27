@@ -510,6 +510,10 @@
           @apply flex items-center justify-center text-sm text-zinc-500;
         }
 
+        .projects-empty {
+          @apply text-center text-zinc-500 text-base py-12 px-4 border border-dashed border-zinc-200 rounded-xl bg-white/60;
+        }
+
         .projects-grid {
           @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8;
 

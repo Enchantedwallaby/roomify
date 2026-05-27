@@ -32,10 +32,8 @@ const Navbar=()=>{
                     </span>
                 </div>
                     <ul className="links">
-                        <a href="#">Product</a>
-                        <a href="#">Pricing</a>
-                        <a href="#">Community</a>
-                        <a href="#">Entreprise</a>
+
+
                     </ul>
                 </div>
                 <div className="actions">

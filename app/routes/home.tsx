@@ -3,9 +3,14 @@ import Navbar from "../../Components/Navbar";
 import {ArrowRight, ArrowUpRight, Clock, Layers} from "lucide-react";
 import Button from "../../Components/ui/Button";
 import Upload from "../../Components/upload";
-import {useNavigate} from "react-router";
-import {useEffect, useRef, useState} from "react";
-import {createProject, getProjects} from "../../lib/puter.action";
+import {useLocation, useNavigate, useOutletContext} from "react-router";
+import {useCallback, useEffect, useRef, useState} from "react";
+import {
+  createProject,
+  getProjects,
+  PROJECTS_UPDATED_EVENT,
+  syncRenderedProjectsToCommunity,
+} from "../../lib/puter.action";
 
 const formatProjectDate = (timestamp: number) =>
   new Intl.DateTimeFormat("en-US", {
@@ -17,62 +22,96 @@ const formatProjectDate = (timestamp: number) =>
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Plan2Reality" },
+    { name: "description", content: "Visualize floor plans and explore community renders." },
   ];
 }
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isSignedIn, userId } = useOutletContext<AuthContext>();
   const [projects, setProjects] = useState<DesignItem[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const isCreatingProjectRef = useRef(false);
+
+  const loadCommunityProjects = useCallback(async () => {
+    if (!isSignedIn || !userId) {
+      setProjects([]);
+      return;
+    }
+
+    setIsLoadingProjects(true);
+    try {
+      let items = await getProjects();
+
+      if (items.length === 0) {
+        await syncRenderedProjectsToCommunity();
+        items = await getProjects();
+      }
+
+      setProjects(items);
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  }, [isSignedIn, userId]);
+
+  useEffect(() => {
+    if (location.pathname === "/") {
+      void loadCommunityProjects();
+    }
+  }, [loadCommunityProjects, location.pathname]);
+
+  useEffect(() => {
+    const handleProjectsUpdated = () => {
+      if (location.pathname === "/") {
+        void loadCommunityProjects();
+      }
+    };
+
+    window.addEventListener(PROJECTS_UPDATED_EVENT, handleProjectsUpdated);
+    return () => {
+      window.removeEventListener(PROJECTS_UPDATED_EVENT, handleProjectsUpdated);
+    };
+  }, [loadCommunityProjects, location.pathname]);
 
   const handleUploadComplete = async (base64Image: string) => {
     try {
-
-      if(isCreatingProjectRef.current) return false;
+      if (isCreatingProjectRef.current) return false;
       isCreatingProjectRef.current = true;
       const newId = Date.now().toString();
       const name = `Residence ${newId}`;
 
       const newItem = {
-        id: newId, name, sourceImage: base64Image,
+        id: newId,
+        name,
+        sourceImage: base64Image,
         renderedImage: undefined,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+        ownerId: userId ?? null,
+        isPublic: false,
+      };
 
-      const saved = await createProject({ item: newItem, visibility: 'private' });
+      const saved = await createProject({ item: newItem, visibility: "private" });
 
-      if(!saved) {
+      if (!saved) {
         console.error("Failed to create project");
         return false;
       }
-
-      setProjects((prev) => [saved, ...prev]);
 
       navigate(`/visualizer/${newId}`, {
         state: {
           initialImage: saved.sourceImage,
           initialRendered: saved.renderedImage || null,
-          name
-        }
+          name,
+        },
       });
 
       return true;
     } finally {
       isCreatingProjectRef.current = false;
     }
-  }
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      const items = await getProjects();
-
-      setProjects(items)
-    }
-
-    fetchProjects();
-  }, []);
+  };
 
   return (
       <div className="home">
@@ -90,7 +129,7 @@ export default function Home() {
           <h1>Build beautiful spaces at the speed of thought with Plan2Reality</h1>
 
           <p className="subtitle">
-            Plan2Reality is an AI-first design environment that helps you visualize, render, and ship architectural projects faster  than ever.
+            Plan2Reality is an AI-first design environment that helps you visualize, render, and ship architectural projects faster than ever.
           </p>
 
           <div className="actions">
@@ -130,37 +169,54 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="projects-grid">
-              {projects.map(({id, name, renderedImage, sourceImage, timestamp}) => (
-                  <div key={id} className="project-card group" onClick={() => navigate(`/visualizer/${id}`)}>
-                    <div className="preview">
-                      <img  src={renderedImage || sourceImage} alt="Project"
-                      />
+            {!isSignedIn ? (
+              <p className="projects-empty">Sign in to browse community renders and share your finished work.</p>
+            ) : isLoadingProjects ? (
+              <p className="projects-empty">Loading community projects...</p>
+            ) : projects.length === 0 ? (
+              <p className="projects-empty">
+                No finished renders yet. Upload a floor plan and your final output will appear here for everyone signed in.
+              </p>
+            ) : (
+              <div className="projects-grid">
+                {projects.map(({ id, name, renderedImage, sourceImage, timestamp, ownerId, sharedBy }) => {
+                  const isOwnProject = !!userId && ownerId === userId;
 
-                      <div className="badge">
-                        <span>Community</span>
-                      </div>
-                    </div>
+                  return (
+                    <div
+                      key={id}
+                      className="project-card group"
+                      onClick={() => navigate(`/visualizer/${id}`)}
+                    >
+                      <div className="preview">
+                        <img src={renderedImage || sourceImage} alt={name || "Project"} />
 
-                    <div className="card-body">
-                      <div>
-                        <h3>{name}</h3>
-
-                        <div className="meta">
-                          <Clock size={12} />
-                          <span>{formatProjectDate(timestamp)}</span>
-                          <span>By JS Mastery</span>
+                        <div className="badge">
+                          <span>{isOwnProject ? "Yours" : "Community"}</span>
                         </div>
                       </div>
-                      <div className="arrow">
-                        <ArrowUpRight size={18} />
+
+                      <div className="card-body">
+                        <div>
+                          <h3>{name}</h3>
+
+                          <div className="meta">
+                            <Clock size={12} />
+                            <span>{formatProjectDate(timestamp)}</span>
+                            <span>By {sharedBy || "Community member"}</span>
+                          </div>
+                        </div>
+                        <div className="arrow">
+                          <ArrowUpRight size={18} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </div>
-  )
+  );
 }
