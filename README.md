@@ -1,103 +1,70 @@
-# Welcome to React Router!
+# Plan2Reality
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Plan2Reality is a React Router application that turns uploaded 2D floor plans into AI-generated 3D architectural visualizations using Puter.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Tech stack
 
-## Features
+- React 19 + TypeScript
+- React Router 7
+- Vite
+- Tailwind CSS
+- Puter.js / Puter Worker
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## Local development
 
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Local Environment
-
-Create your own local env file before running the app:
+Create a local environment file from the example:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Then update `.env.local` with your own values:
+Set the Puter worker URL in `.env.local`:
 
 ```env
-VITE_PUTER_WORKER_URL=REPLACE_ME
+VITE_PUTER_WORKER_URL=YOUR_PUTER_WORKER_URL
 ```
 
-Do not commit `.env.local`. Only `.env.local.example` should be checked in.
-
-### Development
-
-Start the development server with HMR:
+Run the development server:
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
+## Production build
 
 ```bash
 npm run build
 ```
 
-## Deployment
+The Netlify deployment uses the client bundle generated at `build/client`.
 
-### Docker Deployment
+## Netlify deployment
 
-To build and run using Docker:
+This project is configured for Netlify as a client-side React Router SPA. It does not require the Dockerfile or a Node server in production.
 
-```bash
-docker build -t my-app .
+`netlify.toml` configures:
 
-# Run the container
-docker run -p 3000:3000 my-app
+- Build command: `npm run build`
+- Publish directory: `build/client`
+- Node.js: 22
+- SPA fallback for client-side routes such as `/visualizer/:id`
+
+### Required Netlify environment variable
+
+In Netlify, open **Site configuration → Environment variables** and add:
+
+```env
+VITE_PUTER_WORKER_URL=YOUR_PUTER_WORKER_URL
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+Use the URL of the Puter worker that is already configured for this project. Do not commit `.env.local` or any secret credentials.
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+## Notes
 
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+The application has a local-storage fallback for projects when the Puter worker is unavailable. The Puter worker is still required for the hosted project/AI workflow.
